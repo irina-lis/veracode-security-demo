@@ -9,6 +9,7 @@ using System.Net;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.RegularExpressions;
 using System.Web;
 using System.Web.Hosting;
 using System.Web.Mvc;
@@ -441,6 +442,13 @@ namespace VeraDemoNet.Controllers
         {
             logger.Info("PostRegister processRegister");
             var registerViewModel = new RegisterViewModel();
+
+            var validUserNameRegex = @"^[A-Za-z][A-Za-z0-9_-]*$";
+            if (!Regex.IsMatch(username, validUserNameRegex))
+            {
+                registerViewModel.Error = "Username can contain only alphanumeric characters!";
+                return View(registerViewModel);
+            }
 
             Session["username"] = username;
 
