@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web.Hosting;
 using System.Web.Mvc;
 using VeraDemoNet.Models;
@@ -50,6 +52,12 @@ namespace VeraDemoNet.Controllers
             {
                 return "";
             }
+          
+            var validHostNameRegex = @"^(([a-zA-Z]|[a-zA-Z][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z]|[A-Za-z][A-Za-z0-9\-]*[A-Za-z0-9])$";
+            if (!Regex.IsMatch(host, validHostNameRegex))
+            {
+                return "Invalid host name!";
+            }
 
             var output = new StringBuilder();
             try
@@ -79,12 +87,17 @@ namespace VeraDemoNet.Controllers
 
         private string Fortune(string fortuneFile)
         {
-            var output = new StringBuilder();
+            var whitelistFiles = new[] { "funny.txt" , "offensive.txt" };
 
-            if (string.IsNullOrEmpty(fortuneFile)) 
+            if (string.IsNullOrEmpty(fortuneFile))
             {
                 fortuneFile = "funny.txt";
+            } else if (!whitelistFiles.Contains(fortuneFile))
+            {
+                return "Invalid data!";
             }
+
+            var output = new StringBuilder();
 
             try
             {
