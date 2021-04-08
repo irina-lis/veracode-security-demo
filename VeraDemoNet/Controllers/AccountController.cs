@@ -33,13 +33,18 @@ namespace VeraDemoNet.Controllers
         [HttpGet, ActionName("Login")]
         public ActionResult GetLogin(string ReturnUrl = "")
         {
+            if (!string.IsNullOrEmpty(ReturnUrl) && !Url.IsLocalUrl(ReturnUrl))
+            {
+                logger.Warn($"Unsafe redirect URL detected: {ReturnUrl}");
+                ReturnUrl = "";
+            }
+
             logger.Info("Login page visited: " + ReturnUrl);
 
             if (IsUserLoggedIn())
             {
                 return GetLogOut();
             }
-
 
             var userDetailsCookie = Request.Cookies[COOKIE_NAME];
 
@@ -73,15 +78,12 @@ namespace VeraDemoNet.Controllers
 
             Session["username"] = deserializedUser.UserName;
 
-            //if (Url.IsLocalUrl(ReturnUrl))  
             if (string.IsNullOrEmpty(ReturnUrl))
             {
                 return RedirectToAction("Feed", "Blab");
             }
 
-            /* START BAD CODE */
             return Redirect(ReturnUrl);
-            /* END BAD CODE */
         }
 
         [HttpPost, ActionName("Login")]
@@ -91,6 +93,12 @@ namespace VeraDemoNet.Controllers
             {
                 if (ModelState.IsValid)
                 {
+                    if (!string.IsNullOrEmpty(ReturnUrl) && !Url.IsLocalUrl(ReturnUrl))
+                    {
+                        logger.Warn($"Unsafe redirect URL detected: {ReturnUrl}");
+                        ReturnUrl = "";
+                    }
+
                     var userDetails = LoginUser(loginViewModel.UserName, loginViewModel.Password);
 
                     using (EventLog eventLog = new EventLog("Application"))
@@ -132,9 +140,7 @@ namespace VeraDemoNet.Controllers
                         return RedirectToAction("Feed", "Blab");
                     }
 
-                    /* START BAD CODE */
                     return Redirect(ReturnUrl);
-                    /* END BAD CODE */
                 }
             }
             catch (Exception ex)
