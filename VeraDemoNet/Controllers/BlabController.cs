@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Web.Mvc;
@@ -289,33 +290,45 @@ namespace VeraDemoNet.Controllers
         [HttpPost, ActionName("Blabbers")]
         public ActionResult PostBlabbers(string blabberUsername, string command)
         {
+            var whiteListCommands = new[] { "listen", "ignore"};
+            var error = string.Empty;
             if (IsUserLoggedIn() == false)
             {
                 return RedirectToLogin(HttpContext.Request.RawUrl);
             }
 
             var username = GetLoggedInUsername();
-
-            try
+            if (whiteListCommands.Contains(command))
             {
-                using (var dbContext = new BlabberDB())
+                try
                 {
-                    dbContext.Database.Connection.Open();
+                    using (var dbContext = new BlabberDB())
+                    {
+                        dbContext.Database.Connection.Open();
 
-                    var commandType = Type.GetType("VeraDemoNet.Commands." + UpperCaseFirst(command) + "Command");
+                        var commandType = Type.GetType("VeraDemoNet.Commands." + UpperCaseFirst(command) + "Command");
 
-                    /* START BAD CODE */
-                    var cmdObj = (IBlabberCommand) Activator.CreateInstance(commandType, dbContext.Database.Connection, username);
-                    cmdObj.Execute(blabberUsername);
-                    /* END BAD CODE */
+                        var cmdObj = (IBlabberCommand) Activator.CreateInstance(commandType,
+                            dbContext.Database.Connection, username);
+                        cmdObj.Execute(blabberUsername);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex);
                 }
             }
-            catch (Exception ex)
+            else
             {
-                logger.Error(ex);
+                logger.Warn($"Invalid command detected: {command}");
+                error = "Invalid command!";
             }
 
             var viewModel = PopulateBlabbersViewModel("blab_name ASC", username);
+            if (!string.IsNullOrEmpty(error))
+            {
+                viewModel.Error = error;
+            }
 
             return View(viewModel);
         }
