@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Web;
 using System.Web.Mvc;
 using VeraDemoNet.Commands;
 using VeraDemoNet.DataAccess;
@@ -202,13 +203,14 @@ namespace VeraDemoNet.Controllers
             }
 
             var username = GetLoggedInUsername();
-            
+            var encodedBlab = HttpUtility.HtmlEncode(blab);
+
             using (var dbContext = new BlabberDB())
             {
                 dbContext.Database.Connection.Open();
                 dbContext.Database.ExecuteSqlCommand(sqlAddBlab, 
                     new SqlParameter{ParameterName = "@username", Value = username},
-                    new SqlParameter{ParameterName = "@blabcontents", Value = blab},
+                    new SqlParameter{ParameterName = "@blabcontents", Value = encodedBlab },
                     new SqlParameter{ParameterName = "@timestamp", Value = DateTime.Now});
             }
 
@@ -343,6 +345,7 @@ namespace VeraDemoNet.Controllers
             }
 
             var username = GetLoggedInUsername();
+            var encodedComment = HttpUtility.HtmlEncode(comment);
 
             var error = "";
 
@@ -352,7 +355,7 @@ namespace VeraDemoNet.Controllers
                 var result= dbContext.Database.ExecuteSqlCommand(sqlAddComment, 
                     new SqlParameter{ParameterName = "@blabid", Value = blabId},
                     new SqlParameter{ParameterName = "@blabber", Value = username},
-                    new SqlParameter{ParameterName = "@content", Value = comment},
+                    new SqlParameter{ParameterName = "@content", Value = encodedComment },
                     new SqlParameter{ParameterName = "@timestamp", Value = DateTime.Now});
 
                 if (result == 0)
