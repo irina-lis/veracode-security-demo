@@ -185,6 +185,15 @@ namespace VeraDemoNet.Controllers
                 return RedirectToLogin(HttpContext.Request.RawUrl);
             }
 
+            if (Path.GetExtension(file.FileName) != ".png")
+            {
+                Response.StatusCode = (int)HttpStatusCode.UnsupportedMediaType;
+                return new JsonResult
+                {
+                    Data = JsonConvert.DeserializeObject("{\"message\": \"<script>alert('Unsupported profile image format.');</script>\"}")
+                };
+            }
+
             var oldUsername = GetLoggedInUsername();
             var imageDir = HostingEnvironment.MapPath("~/Images/");
 
@@ -394,7 +403,7 @@ namespace VeraDemoNet.Controllers
         }
         
         [HttpGet, ActionName("DownloadProfileImage")]
-	    public ActionResult DownloadProfileImage(string image)
+	    public ActionResult DownloadProfileImage(string user)
 	    {
 		    logger.Info("Entering downloadImage");
 
@@ -403,7 +412,16 @@ namespace VeraDemoNet.Controllers
 	            return RedirectToLogin(HttpContext.Request.RawUrl);
 	        }
 
-            var imagePath = Path.Combine(HostingEnvironment.MapPath("~/Images/"), image); 
+            using (var dbContext = new BlabberDB())
+            {
+                var checkedUser = dbContext.Users.FirstOrDefault(x => x.UserName == user);
+                if (checkedUser == null)
+                {
+                    throw new Exception("User not found.");
+                }
+            }
+
+            var imagePath = Path.Combine(HostingEnvironment.MapPath("~/Images/"), $"{user}.png"); 
 
 		    logger.Info("Fetching profile image: " + imagePath);
 
