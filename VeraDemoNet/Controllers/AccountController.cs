@@ -59,23 +59,9 @@ namespace VeraDemoNet.Controllers
             }
 
             logger.Info("User details were remembered");
-            var unencodedUserDetails = Convert.FromBase64String(userDetailsCookie.Value);
 
-            CustomSerializeModel deserializedUser;
-
-            using (MemoryStream memoryStream = new MemoryStream(unencodedUserDetails))
-            {
-                var binaryFormatter = new BinaryFormatter();
-
-                // set memory stream position to starting point
-                memoryStream.Position = 0;
-
-                // Deserializes a stream into an object graph and return as a object.
-                /* START BAD CODE */
-                deserializedUser = binaryFormatter.Deserialize(memoryStream) as CustomSerializeModel;
-                /* END BAD CODE */
-                logger.Info("User details were retrieved for user: " + deserializedUser.UserName);
-            }
+            var deserializedUser = JsonConvert.DeserializeObject<CustomSerializeModel>(userDetailsCookie.Value);
+            logger.Info("User details were retrieved for user: " + deserializedUser.UserName);
 
             Session["username"] = deserializedUser.UserName;
 
@@ -123,17 +109,12 @@ namespace VeraDemoNet.Controllers
                             RealName = userDetails.RealName
                         };
 
-                        using (var userModelStream = new MemoryStream())
-                        {
-                            IFormatter formatter = new BinaryFormatter();
-                            formatter.Serialize(userModelStream, userModel);
-                            var faCookie =
-                                new HttpCookie(COOKIE_NAME, Convert.ToBase64String(userModelStream.GetBuffer()))
-                                {
-                                    Expires = DateTime.Now.AddDays(30)
-                                };
-                            Response.Cookies.Add(faCookie);
-                        }
+                        var faCookie =
+                            new HttpCookie(COOKIE_NAME, JsonConvert.SerializeObject(userModel))
+                            {
+                                Expires = DateTime.Now.AddDays(30)
+                            };
+                        Response.Cookies.Add(faCookie);
                     }
 
                     if (string.IsNullOrEmpty(ReturnUrl))
