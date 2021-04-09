@@ -175,6 +175,7 @@
     <Compile Include="Controllers\BlabController.cs" />
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\ResetController.cs" />
+    <Compile Include="Helper\LogHelper.cs" />
     <Compile Include="Models\BlabSearchResultViewModel.cs" />
     <Compile Include="Models\SearchBlabsViewModel.cs" />
     <Compile Include="HtmlHelpers\MenuSelectedHelper.cs" />
@@ -299,9 +300,7 @@
     <Content Include="Views\Shared\_LoginLayout.cshtml" />
     <Content Include="Views\Blab\SearchBlabs.cshtml" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Helper\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff2" />
     <Content Include="fonts\glyphicons-halflings-regular.woff" />

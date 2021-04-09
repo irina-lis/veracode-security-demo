@@ -15,6 +15,7 @@ using System.Web.Hosting;
 using System.Web.Mvc;
 using Newtonsoft.Json;
 using VeraDemoNet.DataAccess;
+using VeraDemoNet.Helper;
 using VeraDemoNet.Models;
 
 namespace VeraDemoNet.Controllers  
@@ -36,11 +37,11 @@ namespace VeraDemoNet.Controllers
         {
             if (!string.IsNullOrEmpty(ReturnUrl) && !Url.IsLocalUrl(ReturnUrl))
             {
-                logger.Warn($"Unsafe redirect URL detected: {ReturnUrl}");
+                logger.Warn($"Unsafe redirect URL detected: {ReturnUrl}".ToSafeLogMessage());
                 ReturnUrl = "";
             }
 
-            logger.Info("Login page visited: " + ReturnUrl);
+            logger.Info(("Login page visited: " + ReturnUrl).ToSafeLogMessage());
 
             if (IsUserLoggedIn())
             {
@@ -61,7 +62,7 @@ namespace VeraDemoNet.Controllers
             logger.Info("User details were remembered");
 
             var deserializedUser = JsonConvert.DeserializeObject<CustomSerializeModel>(userDetailsCookie.Value);
-            logger.Info("User details were retrieved for user: " + deserializedUser.UserName);
+            logger.Info(("User details were retrieved for user: " + deserializedUser.UserName).ToSafeLogMessage());
 
             Session["username"] = deserializedUser.UserName;
 
@@ -82,7 +83,7 @@ namespace VeraDemoNet.Controllers
                 {
                     if (!string.IsNullOrEmpty(ReturnUrl) && !Url.IsLocalUrl(ReturnUrl))
                     {
-                        logger.Warn($"Unsafe redirect URL detected: {ReturnUrl}");
+                        logger.Warn($"Unsafe redirect URL detected: {ReturnUrl}".ToSafeLogMessage());
                         ReturnUrl = "";
                     }
 
@@ -260,7 +261,7 @@ namespace VeraDemoNet.Controllers
                 var newFilename = Path.Combine(imageDir, userName);
                 newFilename += extension;
 
-                logger.Info("Saving new profile image: " + newFilename);
+                logger.Info(("Saving new profile image: " + newFilename).ToSafeLogMessage());
 
                 file.SaveAs(newFilename);
             }
@@ -283,7 +284,7 @@ namespace VeraDemoNet.Controllers
         [AllowAnonymous]
         public ActionResult GetPasswordHint(string userName)
         {
-            logger.Info("Entering password-hint with username: " + userName);
+            logger.Info(("Entering password-hint with username: " + userName).ToSafeLogMessage());
 		
             if (string.IsNullOrEmpty(userName))
             {
@@ -340,7 +341,7 @@ namespace VeraDemoNet.Controllers
                 {
                     using (var update = connection.CreateCommand())
                     {
-                        logger.Info("Preparing the Prepared Statement: " + sql);
+                        logger.Info(("Preparing the Prepared Statement: " + sql).ToSafeLogMessage());
                         update.CommandText = sql;
                         update.Parameters.Add(new SqlParameter {ParameterName = "@oldusername", Value = oldUsername});
                         update.Parameters.Add(new SqlParameter {ParameterName = "@newusername", Value = newUsername});
@@ -383,7 +384,7 @@ namespace VeraDemoNet.Controllers
         private void PopulateProfileViewModel(DbConnection connect, string username, ProfileViewModel viewModel)
         {
             string sqlMyProfile = "SELECT username, real_name, blab_name, is_admin FROM users WHERE username = '" + username + "'";
-            logger.Info(sqlMyProfile);
+            logger.Info(sqlMyProfile.ToSafeLogMessage());
 
             using (var eventsCommand = connect.CreateCommand())
             {
@@ -423,7 +424,7 @@ namespace VeraDemoNet.Controllers
 
             var imagePath = Path.Combine(HostingEnvironment.MapPath("~/Images/"), $"{user}.png"); 
 
-		    logger.Info("Fetching profile image: " + imagePath);
+		    logger.Info(("Fetching profile image: " + imagePath).ToSafeLogMessage());
 
 	        return File(imagePath, System.Net.Mime.MediaTypeNames.Application.Octet);
         }
@@ -486,15 +487,14 @@ namespace VeraDemoNet.Controllers
 
         private List<string> RetrieveMyEvents(DbConnection connect, string username)
         {
-            // START BAD CODE
-            var sqlMyEvents = "select event from users_history where blabber='" + 
-                              username + "' ORDER BY eventid DESC; ";
-            logger.Info(sqlMyEvents);
+            var sqlMyEvents = "select event from users_history where blabber=@username ORDER BY eventid DESC; ";
+            logger.Info(sqlMyEvents.ToSafeLogMessage());
             
             var myEvents = new List<string>();
             using (var eventsCommand = connect.CreateCommand())
             {
                 eventsCommand.CommandText = sqlMyEvents;
+                eventsCommand.Parameters.Add(new SqlParameter { ParameterName = "@username", Value = username });
                 using (var userHistoryResult = eventsCommand.ExecuteReader())
                 {
                     while (userHistoryResult.Read())
@@ -503,8 +503,6 @@ namespace VeraDemoNet.Controllers
                     }
                 }
             }
-
-            // END BAD CODE
 
             return myEvents;
         }
