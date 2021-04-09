@@ -18,7 +18,7 @@ namespace VeraDemoNet.DataAccess
 
         public static User Create(string userName, string blabName, string realName, bool isAdmin = false)
         {
-            var password = Md5Hash(userName);
+            var password = Sha256Hash(userName);
             var createdAt = DateTime.Now;
 
             return new User(userName, password, createdAt, null, blabName, realName, isAdmin);
@@ -41,25 +41,19 @@ namespace VeraDemoNet.DataAccess
             IsAdmin = isAdmin;
         }
 
-        protected static string Md5Hash(string input)
+        protected static string Sha256Hash(string rawData)
         {
-            var sb = new StringBuilder();
-            if (string.IsNullOrEmpty(input))
+            using (var sha256Hash = SHA256.Create())
             {
-                return sb.ToString();
-            }
+                var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
 
-            using (MD5 md5 = MD5.Create())
-            {
-                var retVal = md5.ComputeHash(Encoding.Unicode.GetBytes(input));
-
-                foreach (var t in retVal)
+                var builder = new StringBuilder();
+                for (var i = 0; i < bytes.Length; i++)
                 {
-                    sb.Append(t.ToString("x2"));
+                    builder.Append(bytes[i].ToString("x2"));
                 }
+                return builder.ToString();
             }
-
-            return sb.ToString();
         }
     }
 }

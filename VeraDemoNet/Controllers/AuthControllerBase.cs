@@ -20,7 +20,7 @@ namespace VeraDemoNet.Controllers
             {
                 var found = dbContext.Database.SqlQuery<BasicUser>(
                     "select username, real_name as realname, blab_name as blabname, is_admin as isadmin from users where username =@userName and password=@pass;", 
-                    new SqlParameter("userName", userName), new SqlParameter("pass", Md5Hash(passWord))).ToList();
+                    new SqlParameter("userName", userName), new SqlParameter("pass", Sha256Hash(passWord))).ToList();
 
                 if (found.Count != 0)
                 {
@@ -60,25 +60,20 @@ namespace VeraDemoNet.Controllers
                 }));
         }
 
-        protected static string Md5Hash(string input)
+        protected static string Sha256Hash(string rawData)
         {
-            var sb = new StringBuilder();
-            if (string.IsNullOrEmpty(input))
+            using (var sha256Hash = SHA256.Create())
             {
-                return sb.ToString();
-            }
+                var bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
 
-            using (MD5 md5 = MD5.Create())
-            {
-                var retVal = md5.ComputeHash(Encoding.Unicode.GetBytes(input));
-
-                foreach (var t in retVal)
+                var builder = new StringBuilder();
+                for (var i = 0; i < bytes.Length; i++)
                 {
-                    sb.Append(t.ToString("x2"));
+                    builder.Append(bytes[i].ToString("x2"));
                 }
+                return builder.ToString();
             }
-
-            return sb.ToString();
         }
-    }
+
+ }
 }
